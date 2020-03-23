@@ -1,20 +1,9 @@
 import logging
 import configparser
 from common.utility import GlobalVariable
-from enum import Enum
 
 
-class ConfigSection(Enum):
-    AUTHOR = 1
-    APP = 2
-    SMS = 3
-    CACHE = 4
-    DATABASE = 5
-    PATH = 6
-    OPTIMIZATION = 7
-
-
-class ConfigManager:
+class ConfigManager(object):
 
     def __init__(self):
         self.config = configparser.ConfigParser()
