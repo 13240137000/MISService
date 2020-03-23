@@ -1,5 +1,5 @@
-import sys, getopt
-sys.path.append('/Users/jack/Desktop/MISService/MISService')
+import sys, getopt, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 from core.db.business import Student
 from conf.admin import ConfigManager
