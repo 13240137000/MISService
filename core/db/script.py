@@ -8,9 +8,11 @@ class StudentScript(object):
 
     get_by_id = "select * from Student where id = {}"
 
+    update = "update Student set IsExtractFeature = {} where ID = {}"
+
 
 class StudentFeaturesScript(object):
 
-    get_all = "select * from StudentFeatures"
     get_by_id = "select * from StudentFeatures where ID = {}"
+
     update = "update StudentFeatures set Feature = '{}' where ID = {}"

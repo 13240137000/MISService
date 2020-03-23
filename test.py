@@ -37,5 +37,8 @@ from core.db.script import StudentScript
 # conn.close()
 
 s = Student()
-s.init_feature()
+if s.init_feature():
+    print(1)
+else:
+    print(0)
 

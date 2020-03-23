@@ -25,7 +25,7 @@ known_faces = [
     face_recognition.face_encodings(face_recognition.load_image_file(r"images/wubo.png"))[0]
 ]
 
-
+print(known_faces)
 names = [
     'Jack',
     'Wu Bo'
