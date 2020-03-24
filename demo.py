@@ -1,5 +1,7 @@
 import face_recognition
 import cv2
+import numpy as np
+
 
 # This is a demo of running face recognition on a video file and saving the results to a new video file.
 #
@@ -8,28 +10,41 @@ import cv2
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
 
 # Open the input movie file
+from core.db.business import Student
+
 input_movie = cv2.VideoCapture(r"images/jw.mp4")
-length = int(input_movie.get(cv2.CAP_PROP_FRAME_COUNT))
+# length = int(input_movie.get(cv2.CAP_PROP_FRAME_COUNT))
 
 # Create an output movie file (make sure resolution/frame rate matches input video!)
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-output_movie = cv2.VideoWriter('output.avi', fourcc, 29.97, (640, 360))
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# output_movie = cv2.VideoWriter('output.avi', fourcc, 29.97, (640, 360))
 
 # Load some sample pictures and learn how to recognize them.
 # jack_face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(r"images/jack.jpg"))[0]
 #
 # wubo_face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(r"images/wubo.png"))[0]
 
-known_faces = [
-    face_recognition.face_encodings(face_recognition.load_image_file(r"images/jack.jpg"))[0],
-    face_recognition.face_encodings(face_recognition.load_image_file(r"images/wubo.png"))[0]
-]
+s = Student()
+students = s.get_students()
+student_name, student_feature, student_no = s.get_name_feature_and_nos(students)
 
-print(known_faces)
-names = [
-    'Jack',
-    'Wu Bo'
-]
+# known_faces = [
+#     face_recognition.face_encodings(face_recognition.load_image_file(r"images/jack.jpg"))[0],
+#     face_recognition.face_encodings(face_recognition.load_image_file(r"images/wubo.png"))[0]
+# ]
+
+# names = [
+#     'Jack',
+#     'Wu Bo'
+# ]
+
+features = []
+
+for feature in student_feature:
+    feature = str(feature).split(",")
+    features.append(np.array(feature, dtype=np.float).reshape((128,)))
+
+
 
 # Initialize some variables
 face_locations = []
@@ -52,20 +67,17 @@ while True:
     # Find all the faces and face encodings in the current frame of video
     face_locations = face_recognition.face_locations(rgb_frame)
 
-    print(face_locations)
-
     face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
     face_names = []
 
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
-        match = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.50)
-        print('-'*30)
+
+        match = face_recognition.compare_faces(features, face_encoding, tolerance=0.4)
+
         # If you had more than 2 faces, you could make this logic a lot prettier
         # but I kept it simple for the demo
-
-
 
         # name = None
         # if match[0]:
@@ -74,7 +86,9 @@ while True:
         #     name = "Wu bo"
 
         if match.count(True) > 0:
-            name = names[match.index(True)]
+            name = student_no[match.index(True)]
+        else:
+            name = ""
 
         face_names.append(name)
 
@@ -99,7 +113,7 @@ while True:
         break
 
     # Write the resulting image to the output video file
-    print("Writing frame {} / {}".format(frame_number, length))
+    # print("Writing frame {} / {}".format(frame_number, length))
     # output_movie.write(frame)
 
 # All done!

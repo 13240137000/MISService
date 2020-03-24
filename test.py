@@ -4,6 +4,7 @@ from common.utility import GlobalVariable
 from conf.admin import ConfigManager
 from core.db.business import Student
 from core.db.script import StudentScript
+import numpy as np
 
 
 # manager = ConfigManager()
@@ -36,9 +37,6 @@ from core.db.script import StudentScript
 # conn.commit()
 # conn.close()
 
-s = Student()
-if s.init_feature():
-    print(1)
-else:
-    print(0)
-
+# s = Student()
+# result = s.get_student_by_picture(r'/Users/jack/Desktop/MISService/MISService/images/jack.jpg')
+# print(result)
