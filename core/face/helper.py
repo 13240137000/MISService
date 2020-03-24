@@ -5,10 +5,17 @@ import face_recognition as fr
 
 class FaceHelper(object):
 
+    def __get_face_locations(self, picture):
+        return fr.face_locations(picture)
+
+    def __get_face_encodings(self, picture, locations):
+        return fr.face_encodings(picture, locations)
+
+    def __load_picture(self, picture):
+        return fr.load_image_file(picture)
+
     def get_feature(self, picture):
-
         result = ""
-
         try:
 
             if not len(fr.face_encodings(fr.load_image_file(picture))) == 0:
@@ -19,14 +26,7 @@ class FaceHelper(object):
 
         return result
 
-    def __get_face_locations(self, picture):
-        return fr.face_locations(picture)
-
-    def __get_face_encodings(self,picture, locations):
-        return fr.face_encodings(picture, locations)
-
-    def compare(self, picture, student_name, student_feature, student_nos) ->list:
-
+    def compare(self, picture, student_feature, student_nos) ->list:
         try:
 
             # get features
@@ -36,7 +36,7 @@ class FaceHelper(object):
                 features.append(np.array(feature, dtype=np.float).reshape((128,)))
 
             # get locations and encodings
-            picture = fr.load_image_file(picture)
+            picture = self.__load_picture(picture)
             locations = self.__get_face_locations(picture)
             encodings = self.__get_face_encodings(picture, locations)
 

@@ -41,21 +41,21 @@ class Student(object):
         return student
 
     def get_name_feature_and_nos(self, students) -> list:
-        student_name = []
+        # student_name = []
         student_feature = []
         student_no = []
 
         try:
 
             for s in students:
-                student_name.append(s["Name"])
+                # student_name.append(s["Name"])
                 student_feature.append(s["Feature"])
                 student_no.append(s["StudentNo"])
 
         except Exception as error:
             logging.error(error)
 
-        return student_name, student_feature, student_no
+        return student_feature, student_no
 
     def init_feature(self) -> bool:
         result = True
@@ -119,10 +119,10 @@ class Student(object):
 
             # get students
             students = self.get_students()
-            student_name, student_feature, student_nos = self.get_name_feature_and_nos(students)
+            student_feature, student_nos = self.get_name_feature_and_nos(students)
 
             # find student no
-            student_no = self.__face.compare(picture, student_name, student_feature, student_nos)
+            student_no = self.__face.compare(picture, student_feature, student_nos)
 
             # get student
             if len(student_no) > 0:
