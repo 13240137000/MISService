@@ -27,6 +27,7 @@ class FaceHelper(object):
         return result
 
     def compare(self, picture, student_feature, student_nos) ->list:
+        student_no = ""
         try:
 
             # get features
@@ -38,6 +39,8 @@ class FaceHelper(object):
             # get locations and encodings
             picture = self.__load_picture(picture)
             locations = self.__get_face_locations(picture)
+            if len(locations) == 0:
+                return student_no
             encodings = self.__get_face_encodings(picture, locations)
 
             # compare
