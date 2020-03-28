@@ -2,7 +2,7 @@ import os
 import sqlite3
 from common.utility import GlobalVariable
 from conf.admin import ConfigManager
-from core.db.business import Student
+from core.db.business import Student,Log
 from core.db.script import StudentScript
 import numpy as np
 
@@ -40,3 +40,17 @@ import numpy as np
 # s = Student()
 # result = s.get_student_by_picture(r'/Users/jack/Desktop/MISService/MISService/images/jack.jpg')
 # print(result)
+
+l = Log()
+r = l.get_all()
+
+for i in r:
+    print(i)
+
+# l.delete()
+
+# s = 21
+# t = 36.1
+# ss = 0
+#
+# print(l.insert(s, t, ss))

@@ -1,4 +1,4 @@
-class StudentScript(object):
+class StudentScript:
 
     get_all = "select s.ID as 'StudentID', s.Name, s.StudentNo, s.ParentName, s.ParentMobile, sf.ID as 'FeatureID', " \
               "sf.PictureName, sf.Feature " \
@@ -15,14 +15,14 @@ class StudentScript(object):
     update = "update Student set IsExtractFeature = {} where ID = {}"
 
 
-class StudentFeaturesScript(object):
+class StudentFeaturesScript:
 
     get_by_id = "select * from StudentFeatures where ID = {}"
 
     update = "update StudentFeatures set Feature = '{}' where ID = {}"
 
 
-class ErrorScript(object):
+class ErrorScript:
 
     get_all = "select e.id as 'ErrorID'," \
               "s.ID as 'StudentID', s.Name, s.StudentNo, s.ParentName,s.ParentMobile, " \
@@ -35,3 +35,11 @@ class ErrorScript(object):
 
     update = "insert into Error (StudentID) VALUES ({0})"
 
+
+class LogScript:
+
+    insert = "insert into Log (StudentID, LogTime, Temperature, Status) values ({}, '{}', {}, {})"
+
+    get_all = "select * from Log order by Logtime, StudentID"
+
+    delete = "delete from Log"

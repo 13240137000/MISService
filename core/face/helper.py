@@ -5,13 +5,13 @@ import face_recognition as fr
 
 class FaceHelper(object):
 
-    def __get_face_locations(self, picture):
+    def get_face_locations(self, picture):
         return fr.face_locations(picture)
 
-    def __get_face_encodings(self, picture, locations):
+    def get_face_encodings(self, picture, locations):
         return fr.face_encodings(picture, locations)
 
-    def __load_picture(self, picture):
+    def load_picture(self, picture):
         return fr.load_image_file(picture)
 
     def get_feature(self, picture):
@@ -26,7 +26,7 @@ class FaceHelper(object):
 
         return result
 
-    def compare(self, picture, student_feature, student_nos) ->list:
+    def compare(self, picture, student_feature, student_nos, image=None, locations=None) ->list:
         student_no = ""
         try:
 
@@ -37,16 +37,22 @@ class FaceHelper(object):
                 features.append(np.array(feature, dtype=np.float).reshape((128,)))
 
             # get locations and encodings
-            picture = self.__load_picture(picture)
-            locations = self.__get_face_locations(picture)
+            if image is None and locations is None:
+                picture = self.load_picture(picture)
+                locations = self.get_face_locations(picture)
+            else:
+                picture = image
+                locations = locations
+
             if len(locations) == 0:
                 return student_no
-            encodings = self.__get_face_encodings(picture, locations)
+
+            encodings = self.get_face_encodings(picture, locations)
 
             # compare
             for encoding in encodings:
 
-                match = fr.compare_faces(features, encoding, tolerance=0.4)
+                match = fr.compare_faces(features, encoding, tolerance=0.37)
 
                 if match.count(True) > 0:
                     student_no = student_nos[match.index(True)]

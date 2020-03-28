@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import time
 from .helper import SqliteHelper
 from .script import *
 from conf.admin import ConfigManager
@@ -111,8 +112,7 @@ class Student(object):
 
         return students
 
-    def get_student_by_picture(self, picture):
-
+    def get_student_by_picture(self, picture, image=None, locations=None):
         result = []
 
         try:
@@ -122,22 +122,18 @@ class Student(object):
             student_feature, student_nos = self.get_name_feature_and_nos(students)
 
             # find student no
-            student_no = self.__face.compare(picture, student_feature, student_nos)
+            student_no = self.__face.compare(picture, student_feature, student_nos, image, locations)
 
             # get student
             if len(student_no) > 0:
                 result = self.__get_student_by_no(student_no)
             else:
-                result.append("We are sorry, we cant find the student by picture")
+                result = []
 
         except Exception as error:
             logging.error("Get student by picture error - {}".format(error))
 
         return result
-
-
-class Class(object):
-    pass
 
 
 class StudentFeatures(object):
@@ -148,12 +144,15 @@ class StudentFeatures(object):
         try:
 
             for s in success_list:
+
                 feature_id = s["FeatureID"]
                 feature = s["Feature"]
+
                 # update feature
                 feature = re.sub(' +', ',', str(feature)).replace("\n", "").replace("[", "").replace("]", "")
                 sql = StudentFeaturesScript.update.format(feature, feature_id)
                 self.__db.execute(sql)
+
                 # update student
                 student_id = s["StudentID"]
                 sql = StudentScript.update.format(1, student_id)
@@ -178,6 +177,49 @@ class StudentFeatures(object):
             logging.error("update error - {}".format(error))
 
 
-class ClassStudent(object):
-    pass
+class Log(object):
 
+    __db = SqliteHelper()
+
+    def get_all(self) -> list:
+
+        try:
+
+            sql = LogScript.get_all
+            logs = self.__db.execute(sql, result_dict=True)
+
+        except Exception as error:
+            logging.error("log get all - {}".format(error))
+
+        return logs
+
+    def insert(self, student_id, temperature, status) -> bool:
+
+        result = True
+
+        try:
+
+            log_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            sql = LogScript.insert.format(student_id, log_time, temperature, status)
+            self.__db.execute(sql)
+
+        except Exception as error:
+            result = False
+            logging.error("log insert - {}".format(error))
+
+        return result
+
+    def delete(self) -> bool:
+
+        result = True
+
+        try:
+
+            sql = LogScript.delete
+            self.__db.execute(sql)
+
+        except Exception as error:
+            result = False
+            logging.error("log delete - {}".format(error))
+
+        return result

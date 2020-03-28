@@ -1,7 +1,7 @@
 import sys, getopt, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
-from core.db.business import Student
+from core.db.business import Student, Log
 from conf.admin import ConfigManager
 
 
@@ -44,9 +44,32 @@ def compare(picture) -> list:
     return result
 
 
+def get_log() -> list:
+    result = ""
+    try:
+        log = Log()
+        result = log.get_all()
+    except Exception as error:
+        logging.error(error)
+
+    print(result)
+    return result
+
+
+def delete_log():
+    try:
+        log = Log()
+        result = log.delete()
+    except Exception as error:
+        logging.error(error)
+
+    print(result)
+
+
 if __name__ == "__main__":
 
-    opts, args = getopt.getopt(sys.argv[1:], '-v-i-e-c:', ['version', 'init', 'error', 'compare='])
+    opts, args = getopt.getopt(sys.argv[1:], '-v-i-e-c:-l:-d',
+                               ['version', 'init', 'error', 'compare=', 'log', 'delete'])
 
     for opt_name, opt_value in opts:
 
@@ -62,5 +85,11 @@ if __name__ == "__main__":
             sys.exit()
         elif opt_name in ('-c', '--compare'):
             compare(opt_value)
+            sys.exit()
+        elif opt_name in ('-l', '--log'):
+            get_log()
+            sys.exit()
+        elif opt_name in ('-d', '--delete'):
+            delete_log()
             sys.exit()
 
