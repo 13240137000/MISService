@@ -13,7 +13,8 @@ class SqliteHelper(object):
     _connection = None
 
     def __init__(self):
-        self._connection = sqlite3.connect(self._database_file_name)
+        self._connection = sqlite3.connect(self._database_file_name, timeout=3, isolation_level=None,
+                                           check_same_thread=False)
 
     def __dict_factory(self, cursor, row):
         d = {}
