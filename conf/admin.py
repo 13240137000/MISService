@@ -72,3 +72,11 @@ class ConfigManager(object):
             value = ""
             logging.error("ConfigManager Error {}".format(error))
         return value
+
+    def get_picture_value(self, key):
+        try:
+            value = self.config.get("PICTURE", key)
+        except Exception as error:
+            value = ""
+            logging.error("ConfigManager Error {}".format(error))
+        return value
