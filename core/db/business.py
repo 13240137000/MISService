@@ -6,6 +6,7 @@ from .helper import SqliteHelper
 from .script import *
 from conf.admin import ConfigManager
 from core.face.helper import FaceHelper
+from core.image.helper import ImageHelper
 
 
 class Student(object):
@@ -13,6 +14,7 @@ class Student(object):
     __db = SqliteHelper()
     __config = ConfigManager()
     __face = FaceHelper()
+    __image = ImageHelper()
 
     __fail_list = []
     __success_list = []
@@ -77,6 +79,7 @@ class Student(object):
                     else:
                         self.__success_list.append({"StudentID": s["StudentID"], "FeatureID": s["FeatureID"],
                                                     "Feature": feature})
+                        self.__image.resize(s["PictureName"])
 
             if len(self.__success_list) > 0:
                 StudentFeatures().update_feature(self.__success_list)

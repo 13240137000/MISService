@@ -37,15 +37,11 @@ import numpy as np
 # conn.commit()
 # conn.close()
 
-# s = Student()
+s = Student()
+s.init_feature()
 # result = s.get_student_by_picture(r'/Users/jack/Desktop/MISService/MISService/images/jack.jpg')
 # print(result)
 
-l = Log()
-r = l.get_all()
-
-for i in r:
-    print(i)
 
 # l.delete()
 

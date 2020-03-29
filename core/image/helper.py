@@ -1,9 +1,10 @@
 from conf.admin import ConfigManager
 from PIL import Image
+import os
+import logging
 
 
 class ImageHelper(object):
-
 
     __config = ConfigManager()
     __origin_path = __config.get_path_value("picture")
@@ -11,8 +12,20 @@ class ImageHelper(object):
     __width = __config.get_picture_value("weight")
     __height = __config.get_picture_value("height")
 
-    def __get_image_extension_name(self):
-        pass
+    def resize(self, name) -> bool:
 
-    def resize(self, name):
-        pass
+        result = True
+
+        try:
+
+            image = os.path.join(self.__origin_path, name)
+            target_image = os.path.join(self.__target_path, name)
+            instance = Image.open(image)
+            instance.thumbnail((int(self.__width), int(self.__height)))
+            instance.save(target_image)
+
+        except Exception as error:
+            result = False
+            logging.error("resize picture {}".format(error))
+
+        return result
