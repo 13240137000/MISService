@@ -2,11 +2,10 @@ import logging
 import numpy as np
 import face_recognition as fr
 
-
 class FaceHelper(object):
 
-    def get_face_locations(self, picture):
-        return fr.face_locations(picture)
+    def get_face_locations(self, picture, number_of_times_to_upsample=1, model="hog"):
+        return fr.face_locations(picture, number_of_times_to_upsample=number_of_times_to_upsample, model=model)
 
     def get_face_encodings(self, picture, locations):
         return fr.face_encodings(picture, locations)

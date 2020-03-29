@@ -37,8 +37,8 @@ import numpy as np
 # conn.commit()
 # conn.close()
 
-s = Student()
-s.init_feature()
+# s = Student()
+# s.init_feature()
 # result = s.get_student_by_picture(r'/Users/jack/Desktop/MISService/MISService/images/jack.jpg')
 # print(result)
 

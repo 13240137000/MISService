@@ -80,3 +80,11 @@ class ConfigManager(object):
             value = ""
             logging.error("ConfigManager Error {}".format(error))
         return value
+
+    def get_model_value(self, key):
+        try:
+            value = self.config.get("MODEL", key)
+        except Exception as error:
+            value = ""
+            logging.error("ConfigManager Error {}".format(error))
+        return value
