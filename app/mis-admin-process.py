@@ -57,7 +57,7 @@ class UserInterface(object):
         if len(locations) > 0:
 
             for (top, right, bottom, left) in locations:
-                cv.rectangle(image, (left*4, top*4), (right*4, bottom*4), (0, 255, 0), 2)
+                cv.rectangle(image, (left*5, top*5), (right*5, bottom*5), (0, 255, 0), 2)
 
             self.bind_player(image)
 
@@ -93,7 +93,7 @@ class UserInterface(object):
 
             if success:
                 image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-                small_image = cv.resize(image, (0, 0), fx=0.25, fy=0.25)
+                small_image = cv.resize(image, (0, 0), fx=0.2, fy=0.2)
                 small_image = small_image[:, :, ::-1]
 
                 # self.bind_player(image)
