@@ -103,6 +103,8 @@ celerybeat.pid
 
 # Environments
 .env
+.DS_Store
+.idea/
 .venv
 env/
 venv/
