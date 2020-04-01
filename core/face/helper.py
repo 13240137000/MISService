@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import face_recognition as fr
+import cache.vars as gv
 
 class FaceHelper(object):
 
@@ -31,9 +32,14 @@ class FaceHelper(object):
 
             # get features
             features = []
-            for feature in student_feature:
-                feature = str(feature).split(",")
-                features.append(np.array(feature, dtype=np.float).reshape((128,)))
+
+            if gv.get_value("features_list") is None:
+                for feature in student_feature:
+                    feature = str(feature).split(",")
+                    features.append(np.array(feature, dtype=np.float).reshape((128,)))
+                gv.set_value("features_list", features)
+            else:
+                features = list(gv.get_value("features_list"))
 
             # get locations and encodings
             if image is None and locations is None:

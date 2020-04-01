@@ -9,7 +9,6 @@ from PIL import Image, ImageTk
 from multiprocessing import Queue, Process
 
 
-
 class UserInterface(object):
 
     __logs = Queue()
@@ -22,7 +21,8 @@ class UserInterface(object):
 
     def __init__(self):
 
-        self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
+        # self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
+        self.cap = cv.VideoCapture(0)
         self.cap.set(3, int(self.__config.get_capture_value("width")))
         self.cap.set(4, int(self.__config.get_capture_value("height")))
 
@@ -61,13 +61,9 @@ class UserInterface(object):
     def find_student(self, image, locations):
 
         if len(locations) > 0:
-
             info = self.__student.get_student_by_picture(None, image, locations)
-
             if len(info) and len(info[0]["PictureName"]) > 0:
-
                 if self.__current_student_no != info[0]["StudentNo"]:
-
                     self.bind_result(info)
                     self.__current_student_no = info[0]["StudentNo"]
                     self.insert_log_and_sent_sms(info)
@@ -75,14 +71,10 @@ class UserInterface(object):
     def find_face_location(self, image, small_image):
 
         locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model="hog")
-
         if len(locations) > 0:
-
             for (top, right, bottom, left) in locations:
                 cv.rectangle(image, (left*4, top*4), (right*4, bottom*4), (0, 255, 0), 2)
-
             self.bind_player(image)
-
             self.find_student(small_image, locations)
 
         else:
@@ -117,11 +109,13 @@ class UserInterface(object):
                     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
                     small_image = cv.resize(image, (0, 0), fx=0.25, fy=0.25)
                     small_image = small_image[:, :, ::-1]
-                    if loop % 2 == 0:
+                    if loop % 3 == 0:
                         self.find_face_location(image, small_image)
                     else:
                         self.bind_player(image)
                     loop += 1
+                    if loop >= 999:
+                        loop = 0
         except KeyboardInterrupt:
             pass
 

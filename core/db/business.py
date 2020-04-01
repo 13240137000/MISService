@@ -3,12 +3,13 @@ import os
 import re
 import time
 import datetime
+import cache.vars as gv
 from .helper import SqliteHelper
 from .script import *
 from conf.admin import ConfigManager
 from core.face.helper import FaceHelper
 from core.image.helper import ImageHelper
-
+from functools import lru_cache
 
 class Student(object):
 
@@ -20,18 +21,23 @@ class Student(object):
     __fail_list = []
     __success_list = []
 
-    def __get_students(self) -> list:
+    def __init__(self):
+        gv._init()
 
+    @lru_cache(maxsize=102400, typed=True)
+    def __get_students(self, extract) -> list:
         try:
-
-            sql = StudentScript.get_all.format(0)
-            students = self.__db.execute(sql, result_dict=True)
-
+            if gv.get_value("students") is None:
+                sql = StudentScript.get_all.format(extract)
+                students = self.__db.execute(sql, result_dict=True)
+                gv.set_value("students", students)
+            else:
+                students = gv.get_value("students")
         except Exception as error:
             logging.error(error)
-
         return students
 
+    @lru_cache(maxsize=102400, typed=True)
     def __get_student_by_no(self, student_no) -> list:
 
         try:
@@ -44,29 +50,12 @@ class Student(object):
 
         return student
 
-    def get_name_feature_and_nos(self, students) -> list:
-        # student_name = []
-        student_feature = []
-        student_no = []
-
-        try:
-
-            for s in students:
-                # student_name.append(s["Name"])
-                student_feature.append(s["Feature"])
-                student_no.append(s["StudentNo"])
-
-        except Exception as error:
-            logging.error(error)
-
-        return student_feature, student_no
-
     def init_feature(self) -> bool:
         result = True
 
         try:
 
-            students = self.__get_students()
+            students = self.__get_students(0)
             picture_path = self.__config.get_path_value("picture")
 
             for s in students:
@@ -105,25 +94,42 @@ class Student(object):
 
         return students
 
-    def get_students(self):
+    def get_name_feature_and_nos(self, students):
+
+        student_feature = []
+        student_no = []
         try:
 
-            sql = StudentScript.get_all.format(1)
-            students = self.__db.execute(sql, result_dict=True)
+            if gv.get_value("features") is None or gv.get_value("nos") is None:
+                for s in students:
+                    student_feature.append(s["Feature"])
+                    student_no.append(s["StudentNo"])
+                gv.set_value("features", student_feature)
+                gv.set_value("nos", student_no)
+            else:
+                student_feature = list(gv.get_value("features"))
+                student_no = list(gv.get_value("nos"))
 
         except Exception as error:
             logging.error(error)
 
-        return students
+        return student_feature, student_no
 
     def get_student_by_picture(self, picture, image=None, locations=None):
-        result = []
 
+        result = []
+        global __student_nos
+        global __student_feature
         try:
 
             # get students
-            students = self.get_students()
-            student_feature, student_nos = self.get_name_feature_and_nos(students)
+            students = self.__get_students(1)
+
+            if (not gv.get_value("features") is None) and (not gv.get_value("nos") is None):
+                student_feature = gv.get_value("features")
+                student_nos = gv.get_value("nos")
+            else:
+                student_feature, student_nos = self.get_name_feature_and_nos(students)
 
             # find student no
             student_no = self.__face.compare(picture, student_feature, student_nos, image, locations)
@@ -148,7 +154,6 @@ class StudentFeatures(object):
         try:
 
             for s in success_list:
-
                 feature_id = s["FeatureID"]
                 feature = s["Feature"]
 
@@ -182,7 +187,6 @@ class StudentFeatures(object):
 
 
 class Log(object):
-
     __db = SqliteHelper(db_name="log.db")
     __config = ConfigManager()
 
@@ -231,16 +235,18 @@ class Log(object):
         return result
 
     def total_record_by_minutes(self, student_id):
+
         result = []
+
         try:
+
             minutes = int(self.__config.get_sms_value("expire"))
-            start_time = (datetime.datetime.now()-datetime.timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
+            start_time = (datetime.datetime.now() - datetime.timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
             end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
             sql = LogScript.total_record_by_minutes.format(start_time, end_time, student_id)
             result = self.__db.execute(sql)
+
         except Exception as error:
             logging.error("total record by minutes - {}".format(error))
 
         return result
-
-
