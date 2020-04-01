@@ -4,12 +4,11 @@ def _init():
 
 
 def set_value(key, value):
-    """ 定义一个全局变量 """
     _global_dict[key] = value
 
 
-def get_value(key, defValue=None):
+def get_value(key, default=None):
     try:
         return _global_dict[key]
     except KeyError:
-        return defValue
+        return default
