@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import time
+import datetime
 from .helper import SqliteHelper
 from .script import *
 from conf.admin import ConfigManager
@@ -182,7 +183,8 @@ class StudentFeatures(object):
 
 class Log(object):
 
-    __db = SqliteHelper()
+    __db = SqliteHelper(db_name="log.db")
+    __config = ConfigManager()
 
     def get_all(self) -> list:
 
@@ -196,14 +198,15 @@ class Log(object):
 
         return logs
 
-    def insert(self, student_id, temperature, status) -> bool:
+    def insert(self, student_id, student_no, student_name, temperature, status, is_sent_sms, mobile) -> bool:
 
         result = True
 
         try:
 
             log_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-            sql = LogScript.insert.format(student_id, log_time, temperature, status)
+            sql = LogScript.insert.format(student_id, student_no, student_name, temperature, log_time, status,
+                                          is_sent_sms, mobile)
             self.__db.execute(sql)
 
         except Exception as error:
@@ -226,3 +229,18 @@ class Log(object):
             logging.error("log delete - {}".format(error))
 
         return result
+
+    def total_record_by_minutes(self, student_id):
+        result = []
+        try:
+            minutes = int(self.__config.get_sms_value("expire"))
+            start_time = (datetime.datetime.now()-datetime.timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
+            end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            sql = LogScript.total_record_by_minutes.format(start_time, end_time, student_id)
+            result = self.__db.execute(sql)
+        except Exception as error:
+            logging.error("total record by minutes - {}".format(error))
+
+        return result
+
+

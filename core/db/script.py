@@ -38,8 +38,13 @@ class ErrorScript:
 
 class LogScript:
 
-    insert = "insert into Log (StudentID, LogTime, Temperature, Status) values ({}, '{}', {}, {})"
+    insert = "insert into Log (StudentID, StudentNo, StudentName, Temperature, LogTime, Status, IsSentSMS, " \
+             "MobileNumber) values ({}, '{}', '{}', {}, '{}', {}, {}, '{}')"
 
     get_all = "select * from Log order by Logtime, StudentID"
 
     delete = "delete from Log"
+
+    total_record_by_minutes = "select ID from log where IsSentSMS = 1 " \
+                              "and LogTime Between '{}' and '{}' " \
+                              "and StudentID = {}"

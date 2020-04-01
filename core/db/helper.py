@@ -10,13 +10,21 @@ class SqliteHelper(object):
     """
     _config = ConfigManager()
     _database_file_name = os.path.join(_config.get_path_value("db"), _config.get_database_value("name"))
+    _database_path = _config.get_path_value("db")
     _connection = None
 
-    def __init__(self):
-        self._connection = sqlite3.connect(self._database_file_name, timeout=3, isolation_level=None,
-                                           check_same_thread=False)
+    def __init__(self, db_name=None):
+
+        if db_name is None:
+            self._connection = sqlite3.connect(self._database_file_name, timeout=3, isolation_level=None,
+                                               check_same_thread=False)
+        else:
+            db_name = os.path.join(self._database_path, db_name)
+            self._connection = sqlite3.connect(db_name, timeout=3, isolation_level=None,
+                                               check_same_thread=False)
 
     def __dict_factory(self, cursor, row):
+
         d = {}
         for idx, col in enumerate(cursor.description):
             d[col[0]] = row[idx]

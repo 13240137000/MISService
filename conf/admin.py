@@ -88,3 +88,11 @@ class ConfigManager(object):
             value = ""
             logging.error("ConfigManager Error {}".format(error))
         return value
+
+    def get_capture_value(self, key):
+        try:
+            value = self.config.get("CAPTURE", key)
+        except Exception as error:
+            value = ""
+            logging.error("ConfigManager Error {}".format(error))
+        return value

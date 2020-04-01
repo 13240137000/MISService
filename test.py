@@ -50,3 +50,7 @@ import numpy as np
 # ss = 0
 #
 # print(l.insert(s, t, ss))
+
+__log = Log()
+
+print(__log.total_record_by_minutes())
