@@ -154,10 +154,14 @@ class Student(object):
 
             # get student
             if len(student_no) > 0:
-                if gv.get_value("student_list") is None:
-                    self.__init_students()
-                # result = self.__get_student_by_no(student_no)
-                result = dict(gv.get_value("student_list")).get(student_no)
+                try:
+                    if gv.get_value("student_list") is None:
+                        self.__init_students()
+                    result = dict(gv.get_value("student_list")).get(student_no)
+                except Exception as error:
+                    result = self.__get_student_by_no(student_no)
+                    result = result[0]
+                    logging.error("get student by picture error - {}".format(error))
             else:
                 result = []
 
