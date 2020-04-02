@@ -8,6 +8,9 @@ class StudentScript:
 
     get_by_id = "select * from Student where id = {}"
 
+    get_all_for_search_by_no = "select s.*, sf.PictureName from Student s " \
+                               "inner join StudentFeatures sf on s.ID = sf.StudentID where s.IsExtractFeature = {}"
+
     get_student_by_no = "select s.*, sf.PictureName from Student s " \
                        "inner join StudentFeatures sf on s.ID = sf.StudentID " \
                        "where s.StudentNo = '{}' "

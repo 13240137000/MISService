@@ -21,8 +21,8 @@ class UserInterface(object):
 
     def __init__(self):
 
-        # self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
-        self.cap = cv.VideoCapture(0)
+        self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
+        # self.cap = cv.VideoCapture(0)
         self.cap.set(3, int(self.__config.get_capture_value("width")))
         self.cap.set(4, int(self.__config.get_capture_value("height")))
 
@@ -50,9 +50,9 @@ class UserInterface(object):
     def insert_log_and_sent_sms(self, info):
 
         temperature = {"temperature": 36.1}
-        info[0].update(temperature)
+        info.update(temperature)
 
-        self.__logs.put(info[0])
+        self.__logs.put(info)
         task = LogProcess(self.__logs)
         task.daemon = True
         task.start()
@@ -62,10 +62,10 @@ class UserInterface(object):
 
         if len(locations) > 0:
             info = self.__student.get_student_by_picture(None, image, locations)
-            if len(info) and len(info[0]["PictureName"]) > 0:
-                if self.__current_student_no != info[0]["StudentNo"]:
+            if len(info) and len(info["PictureName"]) > 0:
+                if self.__current_student_no != info["StudentNo"]:
                     self.bind_result(info)
-                    self.__current_student_no = info[0]["StudentNo"]
+                    self.__current_student_no = info["StudentNo"]
                     self.insert_log_and_sent_sms(info)
 
     def find_face_location(self, image, small_image):
@@ -83,7 +83,7 @@ class UserInterface(object):
 
     def bind_result(self, info):
 
-        image = Image.open(os.path.join(self.__thumbnail_path, info[0]["PictureName"]))
+        image = Image.open(os.path.join(self.__thumbnail_path, info["PictureName"]))
         image_tk = ImageTk.PhotoImage(image=image)
         self.pnl_photo.imgtk = image_tk
         self.pnl_photo.config(image=image_tk)

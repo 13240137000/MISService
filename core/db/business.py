@@ -23,6 +23,7 @@ class Student(object):
 
     def __init__(self):
         gv._init()
+        self.__init_students()
 
     @lru_cache(maxsize=102400, typed=True)
     def __get_students(self, extract) -> list:
@@ -37,7 +38,6 @@ class Student(object):
             logging.error(error)
         return students
 
-    @lru_cache(maxsize=102400, typed=True)
     def __get_student_by_no(self, student_no) -> list:
 
         try:
@@ -49,6 +49,26 @@ class Student(object):
             logging.error(error)
 
         return student
+
+    def __init_students(self):
+        try:
+
+            sql = StudentScript.get_all_for_search_by_no.format(1)
+            student = self.__db.execute(sql, result_dict=True)
+
+            students = {}
+            for s in student:
+                key = s["StudentNo"]
+                value = s
+                element = {key: value}
+                students.update(element)
+
+            gv.set_value("student_list", students)
+
+        except Exception as error:
+            logging.error("init students error - {}".format(error))
+
+        return None
 
     def init_feature(self) -> bool:
         result = True
@@ -118,8 +138,6 @@ class Student(object):
     def get_student_by_picture(self, picture, image=None, locations=None):
 
         result = []
-        global __student_nos
-        global __student_feature
         try:
 
             # get students
@@ -136,7 +154,10 @@ class Student(object):
 
             # get student
             if len(student_no) > 0:
-                result = self.__get_student_by_no(student_no)
+                if gv.get_value("student_list") is None:
+                    self.__init_students()
+                # result = self.__get_student_by_no(student_no)
+                result = dict(gv.get_value("student_list")).get(student_no)
             else:
                 result = []
 
