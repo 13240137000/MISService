@@ -11,6 +11,7 @@ from core.face.helper import FaceHelper
 from core.image.helper import ImageHelper
 from functools import lru_cache
 
+
 class Student(object):
 
     __db = SqliteHelper()

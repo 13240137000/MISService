@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
     __face = FaceHelper()
     __config = ConfigManager()
     __thumbnail_path = __config.get_path_value("thumbnail")
+    __model = __config.get_model_value("name")
     __current_student_no = ""
 
     def __init__(self, log, queue):
@@ -27,7 +28,7 @@ class MainWindow(QMainWindow):
         self.log = log
         self.log.start()
         self.queue = queue
-        self.cap = cv.VideoCapture(0)
+        self.cap = cv.VideoCapture(r"/Users/jack/Desktop/MISService/MISService/images/jw.mp4")
         width = int(self.__config.get_capture_value("width"))
         height = int(self.__config.get_capture_value("height"))
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
@@ -74,7 +75,10 @@ class MainWindow(QMainWindow):
     def find_student(self, image, locations):
 
         if len(locations) > 0:
+            start = time.time()
             info = self.__student.get_student_by_picture(None, image, locations)
+            end = time.time()
+            print(end - start)
             if len(info) and len(info["PictureName"]) > 0:
                 self.bind_result(info)
                 self.insert_log_and_sent_sms(info)
@@ -82,7 +86,7 @@ class MainWindow(QMainWindow):
 
     def find_face_location(self, image, small_image):
 
-        locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model="hog")
+        locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model=self.__model)
         if len(locations) > 0:
             for (top, right, bottom, left) in locations:
                 cv.rectangle(image, (left*4, top*4), (right*4, bottom*4), (0, 255, 0), 2)
