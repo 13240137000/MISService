@@ -4,121 +4,129 @@ import cv2 as cv
 from core.db.business import Student, Log
 from core.face.helper import FaceHelper
 from conf.admin import ConfigManager
-from PIL import Image, ImageQt
-from multiprocessing import Queue, Process
+from PIL import Image,ImageQt
+import multiprocessing as mp
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+import time
 
 
 class MainWindow(QMainWindow):
 
-    __logs = Queue()
     __student = Student()
     __face = FaceHelper()
-    __log = Log()
-    __config = ConfigManager()
     __config = ConfigManager()
     __thumbnail_path = __config.get_path_value("thumbnail")
     __current_student_no = ""
 
-    def __init__(self):
+    def __init__(self, log, queue):
+
         QMainWindow.__init__(self)
+        self.log = log
+        self.log.start()
+        self.queue = queue
         self.cap = cv.VideoCapture(0)
-        width = 1024  # 定义摄像头获取图像宽度
-        height = 768  # 定义摄像头获取图像长度
+        width = int(self.__config.get_capture_value("width"))
+        height = int(self.__config.get_capture_value("height"))
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
-        print(self.cap.get(3))
-        print(self.cap.get(4))
         self.setGeometry(QtCore.QRect(0,0,800,480))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.displayLabel = QLabel(self)
         self.displayLabel.setGeometry(QtCore.QRect(0,0,800,480))
-        self.displayLabel.setFixedSize(800,480)
-        self.shade = Shadewidget()
-        self.shade.setParent(self, Qt.FramelessWindowHint|Qt.Window)
-        self.shade.hide()
+        self.displayLabel.setFixedSize(800, 480)
+        self.shadow = ShadowWidget()
+        self.shadow.setParent(self, Qt.FramelessWindowHint|Qt.Window)
+        self.shadow.hide()
         self.show()
         self.timer = QTimer()
         self.timer.start()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.start_camera)
-        self.shadeTimer = QTimer()
-        self.shadeTimer.setInterval(10000)
-        self.shadeTimer.timeout.connect(self.hideShade)
+        self.shadowTimer = QTimer()
+        self.shadowTimer.setInterval(10000)
+        self.shadowTimer.timeout.connect(self.hide_shadow)
 
     def quit(self):
         try:
+            self.log.terminate()
             self.cap.release()
             self.close()
         except KeyboardInterrupt:
+            self.log.terminate()
             self.close()
 
-    def hideShade(self):
+    def hide_shadow(self):
 
-        self.shade.hide()
-        self.shadeTimer.stop()
+        self.shadow.hide()
+        self.shadowTimer.stop()
 
     def insert_log_and_sent_sms(self, info):
 
-        temperature = {"temperature": 36.1}
-        info.update(temperature)
-
-        self.__logs.put(info)
-        task = LogProcess(self.__logs)
-        task.daemon = True
-        task.start()
-        task.join()
+        if self.__current_student_no != info["StudentNo"]:
+            self.__current_student_no = info["StudentNo"]
+            temperature = {"temperature": 36.1}
+            info.update(temperature)
+            self.queue.put(info)
 
     def find_student(self, image, locations):
 
         if len(locations) > 0:
             info = self.__student.get_student_by_picture(None, image, locations)
             if len(info) and len(info["PictureName"]) > 0:
-                if self.__current_student_no != info["StudentNo"]:
-                    # self.insert_log_and_sent_sms(info)
-                    self.__current_student_no = info["StudentNo"]
                 self.bind_result(info)
-                self.shadeTimer.start()
+                self.insert_log_and_sent_sms(info)
+                self.shadowTimer.start()
 
-    def find_face_location(self,image,small_image):
+    def find_face_location(self, image, small_image):
+
         locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model="hog")
         if len(locations) > 0:
             for (top, right, bottom, left) in locations:
                 cv.rectangle(image, (left*4, top*4), (right*4, bottom*4), (0, 255, 0), 2)
             self.bind_player(image)
             self.find_student(small_image, locations)
+        else:
+            self.bind_player(image)
 
     def bind_result(self, info):
-        self.shadeTimer.start()
+        self.shadowTimer.start()
         image = Image.open(os.path.join(self.__thumbnail_path, info["PictureName"]))
         img = ImageQt.ImageQt(image)
-        self.shade.photoLabel.setPixmap(QPixmap.fromImage(img).scaled(self.shade.photoLabel.width(), self.shade.photoLabel.height()))
-        self.shade.studentNameLabel.setText("姓名："+info["Name"])
-        self.shade.studentNoLabel.setText("学号："+info["StudentNo"])
-        self.shade.show()
+        self.shadow.photoLabel.setPixmap(
+            QPixmap.fromImage(img).scaled(self.shadow.photoLabel.width(), self.shadow.photoLabel.height()))
+        self.shadow.studentNameLabel.setText("姓名：" + info["Name"])
+        self.shadow.studentNoLabel.setText("学号：" + info["StudentNo"])
+        self.shadow.show()
 
     def bind_player(self, image):
         image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
         img = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)
-        self.displayLabel.setPixmap(QPixmap.fromImage(img).scaled(self.displayLabel.width(),self.displayLabel.height()))
+        self.displayLabel.setPixmap(
+            QPixmap.fromImage(img).scaled(self.displayLabel.width(), self.displayLabel.height()))
 
     def start_camera(self):
-        success, image = self.cap.read()
-        if success:
-            imageRGB = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-            small_image = cv.resize(imageRGB, (0, 0), fx=0.25, fy=0.25)
-            small_image = small_image[:, :, ::-1]
-            self.bind_player(image)
-            self.find_face_location(image,small_image)
+
+        try:
+
+            success, image = self.cap.read()
+
+            if success:
+                picture = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+                small_image = cv.resize(picture, (0, 0), fx=0.25, fy=0.25)
+                small_image = small_image[:, :, ::-1]
+                self.find_face_location(image, small_image)
+
+        except KeyboardInterrupt:
+            pass
 
 
-class Shadewidget(QWidget):
+class ShadowWidget(QWidget):
 
-    def __init__(self,parent=None):
-        super(Shadewidget,self).__init__(parent)
+    def __init__(self, parent=None):
+        super(ShadowWidget,self).__init__(parent)
 
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -139,19 +147,25 @@ class Shadewidget(QWidget):
         self.setLayout(vLayout)
 
 
-class LogProcess(Process):
+class LogService(mp.Process):
 
     __log = Log()
 
-    def __init__(self, logs):
-        Process.__init__(self)
-        self.logs = logs
+    def __init__(self, tasks):
+        super(LogService, self).__init__()
+        self.__tasks = tasks
+        print("{} - The log service has been started...".format(mp.current_process()))
 
     def run(self):
-
-        if not bool(self.logs.empty()):
-
-            self.check_is_sent_sms(self.logs.get())
+        print("The log service has been started, pid is {}, process name is {}, current process is {}".format(
+            mp.Process.pid, mp.Process.name, mp.current_process()))
+        try:
+            while True:
+                info = self.__tasks.get(True)
+                self.check_is_sent_sms(info)
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
     def check_is_sent_sms(self, info):
 
@@ -170,7 +184,10 @@ class LogProcess(Process):
 
 
 if __name__ == '__main__':
-    app=QApplication([])
-    w = MainWindow()
+
+    q = mp.Queue()
+    scheduler = LogService(q)
+    app = QApplication([])
+    w = MainWindow(scheduler, q)
     w.show()
     app.exec_()
