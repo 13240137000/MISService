@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         self.log = log
         self.log.start()
         self.queue = queue
-        self.cap = cv.VideoCapture(r"/Users/jack/Desktop/MISService/MISService/images/jw.mp4")
+        self.cap = cv.VideoCapture(0)
         width = int(self.__config.get_capture_value("width"))
         height = int(self.__config.get_capture_value("height"))
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
@@ -75,10 +75,7 @@ class MainWindow(QMainWindow):
     def find_student(self, image, locations):
 
         if len(locations) > 0:
-            start = time.time()
             info = self.__student.get_student_by_picture(None, image, locations)
-            end = time.time()
-            print(end - start)
             if len(info) and len(info["PictureName"]) > 0:
                 self.bind_result(info)
                 self.insert_log_and_sent_sms(info)
@@ -158,10 +155,10 @@ class LogService(mp.Process):
     def __init__(self, tasks):
         super(LogService, self).__init__()
         self.__tasks = tasks
-        print("{} - The log service has been started...".format(mp.current_process()))
+        print("{} - The log service has been init...".format(mp.current_process()))
 
     def run(self):
-        print("The log service has been started, pid is {}, process name is {}, current process is {}".format(
+        print("The log service has been started... pid is {}, process name is {}, current process is {}".format(
             mp.Process.pid, mp.Process.name, mp.current_process()))
         try:
             while True:
