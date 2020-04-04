@@ -4,13 +4,14 @@ import face_recognition as fr
 import cache.vars as gv
 from conf.admin import ConfigManager
 
+
 class FaceHelper(object):
 
     __config = ConfigManager()
     __tolerance = float(__config.get_optimization_value("tolerance"))
 
     def get_face_locations(self, picture, number_of_times_to_upsample=1, model="hog"):
-        return fr.face_locations(picture, number_of_times_to_upsample=1, model="hog")
+        return fr.face_locations(picture, number_of_times_to_upsample=number_of_times_to_upsample, model=model)
 
     def get_face_encodings(self, picture, locations):
         return fr.face_encodings(picture, locations)
