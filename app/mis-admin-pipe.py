@@ -6,24 +6,24 @@ from core.db.business import Student, Log
 from core.face.helper import FaceHelper
 from conf.admin import ConfigManager
 from PIL import Image, ImageTk
-from multiprocessing import Queue, Process
+import multiprocessing as mp
+import time
 
-aaa = 1
 
 class UserInterface(object):
 
-    __logs = Queue()
     __student = Student()
     __face = FaceHelper()
-    __log = Log()
     __config = ConfigManager()
     __thumbnail_path = __config.get_path_value("thumbnail")
     __current_student_no = ""
 
-    def __init__(self):
-        print(aaa)
-        self.cap = cv.VideoCapture(0)
-        # self.cap = cv.VideoCapture(0)
+    def __init__(self, queue, log):
+        self.log = log
+        self.log.start()
+        self.queue = queue
+
+        self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
         self.cap.set(3, int(self.__config.get_capture_value("width")))
         self.cap.set(4, int(self.__config.get_capture_value("height")))
 
@@ -39,13 +39,16 @@ class UserInterface(object):
         self.btn_quit = Button(self.frm_info, text="退出", command=self.quit).pack()
 
     def start(self):
+        print("{} GUI Started.".format(mp.Process.pid))
         self.main_window.mainloop()
 
     def quit(self):
         try:
+            self.log.terminate()
             self.cap.release()
             self.main_window.quit()
         except KeyboardInterrupt:
+            self.log.terminate()
             self.main_window.quit()
 
     def insert_log_and_sent_sms(self, info):
@@ -53,11 +56,7 @@ class UserInterface(object):
         temperature = {"temperature": 36.1}
         info.update(temperature)
 
-        self.__logs.put(info)
-        task = LogProcess(self.__logs)
-        task.daemon = True
-        task.start()
-        task.join()
+        self.queue.put(info)
 
     def find_student(self, image, locations):
 
@@ -121,19 +120,24 @@ class UserInterface(object):
             pass
 
 
-class LogProcess(Process):
+class LogService(mp.Process):
 
     __log = Log()
 
-    def __init__(self, logs):
-        Process.__init__(self)
-        self.logs = logs
+    def __init__(self, tasks):
+        super(LogService, self).__init__()
+        self.__tasks = tasks
+        print("{} - The log service has been started...".format(mp.current_process()))
 
     def run(self):
-
-        if not bool(self.logs.empty()):
-
-            self.check_is_sent_sms(self.logs.get())
+        print("Log Service", mp.Process.pid)
+        try:
+            while True:
+                info = self.__tasks.get(True)
+                self.check_is_sent_sms(info)
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
     def check_is_sent_sms(self, info):
 
@@ -153,4 +157,6 @@ class LogProcess(Process):
 
 if __name__ == '__main__':
 
-    UserInterface().start()
+    q = mp.Queue()
+    scheduler = LogService(q)
+    UserInterface(q, scheduler).start()

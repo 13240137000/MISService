@@ -140,7 +140,6 @@ class Student(object):
         result = []
         try:
 
-            # get students
             students = self.__get_students(1)
 
             if (not gv.get_value("features") is None) and (not gv.get_value("nos") is None):
@@ -149,7 +148,6 @@ class Student(object):
             else:
                 student_feature, student_nos = self.get_name_feature_and_nos(students)
 
-            # find student no
             student_no = self.__face.compare(picture, student_feature, student_nos, image, locations)
 
             # get student

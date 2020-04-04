@@ -2,8 +2,12 @@ import logging
 import numpy as np
 import face_recognition as fr
 import cache.vars as gv
+from conf.admin import ConfigManager
 
 class FaceHelper(object):
+
+    __config = ConfigManager()
+    __tolerance = float(__config.get_optimization_value("tolerance"))
 
     def get_face_locations(self, picture, number_of_times_to_upsample=1, model="hog"):
         return fr.face_locations(picture, number_of_times_to_upsample=1, model="hog")
@@ -57,7 +61,7 @@ class FaceHelper(object):
             # compare
             for encoding in encodings:
 
-                match = fr.compare_faces(features, encoding, tolerance=0.37)
+                match = fr.compare_faces(features, encoding, tolerance=self.__tolerance)
 
                 if match.count(True) > 0:
                     student_no = student_nos[match.index(True)]
