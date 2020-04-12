@@ -68,7 +68,7 @@ def delete_log():
 
 if __name__ == "__main__":
 
-    opts, args = getopt.getopt(sys.argv[1:], '-v-i-e-c:-l:-d',
+    opts, args = getopt.getopt(sys.argv[1:], '-v-i-e-c:-l-d',
                                ['version', 'init', 'error', 'compare=', 'log', 'delete'])
 
     for opt_name, opt_value in opts:
