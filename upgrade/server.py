@@ -1,45 +1,75 @@
-import os
-import socket
-import hashlib
+import socketserver
 import json
+import ast
+import os
+import hashlib
+import logging
+from decimal import Decimal
 
 
-class UpgradeServer:
+class UpgradeServer(socketserver.BaseRequestHandler):
 
-    __base_directory = os.path.dirname(os.path.abspath(__file__))
-    __download_directory = os.path.join(__base_directory, 'download')
-    __host = "127.0.0.1"
-    __port = 10000
-    __address = (__host, __port)
-
-    def __init__(self):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    def bind(self):
-        self.server.bind(self.__address)
-        self.server.listen()
-
-    def start(self):
+    def handle(self):
 
         try:
-
-            self.bind()
-            print("The upgrade server has been started.")
             while True:
-                client, address = self.server.accept()
-                print("{} has been connection to client".format(address))
-                res = client.recv(2)
-                print(res.decode(encoding="utf-8"))
-                client.sendall('{"status":"success"}'.encode(encoding="utf-8"))
+
+                message = self.request.recv(1024)
+                if message == b'':
+                    continue
+
+                message = Utility.get_message_info(message)
+
+                if len(message) == 0:
+                    action = "exit"
+                else:
+                    action = message.get("action")
+
+                if action == "exit":
+                    break
+
+                if action == "hello":
+                    self.request.send('hello'.encode("utf-8"))
+                    continue
+
+                if action == "search":
+                    version = message.get("version")
+                    version = str(Decimal(version) + Decimal('0.1'))
+                    info = Utility.get_version_info(version)
+                    if len(info) == 0:
+                        info = "NotFound".encode("utf-8")
+                    else:
+                        info = str(info).encode("utf-8")
+                    self.request.send(info)
+                    continue
+
+                if action == "download":
+                    file_info = ast.literal_eval(info.decode("utf-8"))
+                    file_name = "{}.{}".format(file_info.get("version"), "tar.gz")
+                    file_size = int(file_info.get("size"))
+                    file_path = os.path.join("./source/", file_name)
+                    try:
+                        with open(file_path, "rb") as f:
+                            if 0 < file_size <= 1024:
+                                self.request.send(f.read())
+                            else:
+                                total_size = file_size
+                                while True:
+                                    if total_size > 1024:
+                                        self.request.send(f.read(1024))
+                                        total_size = total_size - 1024
+                                    else:
+                                        self.request.send(f.read(file_size - total_size))
+                                        break
+
+                    except IOError as error:
+                        pass
 
         except Exception as error:
-            print("Sorry, we got an error - {}".format(error))
-
-    def download(self):
-        pass
-
-    def close(self):
-        pass
+            logging.error("Sorry, we got an error from handle - {}".format(error))
+        finally:
+            print('quit')
+            self.request.close()
 
 
 class Utility:
@@ -85,9 +115,45 @@ class Utility:
             print("Sorry, we got an error {}".format(error))
         return result
 
+    @staticmethod
+    def get_message_info(message):
+
+        try:
+            info = message.decode("utf-8")
+            info = ast.literal_eval(info)
+        except Exception as error:
+            info = {}
+            logging.error("Sorry, we got an error from get_message_info - {}".format(error))
+        return info
+
+    @staticmethod
+    def get_version_info(version):
+
+        try:
+
+            info = Utility.get_data(version)
+
+            if len(info) > 0:
+                # size = os.stat("./source/{}.tar.gz".format(version)).st_size
+                size = os.path.getsize("./source/{}.tar.gz".format(version))
+                info.update({"size": size})
+        except Exception as error:
+            info = {}
+            logging.error("Sorry, we got an error from get_version_info - {}".format(error))
+
+        return info
+
 
 if __name__ == '__main__':
 
-    server = UpgradeServer()
-    server.start()
+    try:
+
+        host = "127.0.0.1"
+        port = 10003
+        address = (host, port)
+        server = socketserver.ThreadingTCPServer(address, UpgradeServer)
+        server.serve_forever()
+
+    except KeyboardInterrupt:
+        pass
 
