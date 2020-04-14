@@ -11,6 +11,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import time
+import setproctitle
 
 
 class MainWindow(QMainWindow):
@@ -169,7 +170,6 @@ class LogService(mp.Process):
             pass
 
     def check_is_sent_sms(self, info):
-
         sms = 0
         if len(self.__log.total_record_by_minutes(int(info["ID"]))) <= 0:
             self.sms()
@@ -186,6 +186,7 @@ class LogService(mp.Process):
 
 if __name__ == '__main__':
 
+    setproctitle.setproctitle("MISApplication")
     q = mp.Queue()
     scheduler = LogService(q)
     app = QApplication([])

@@ -1,10 +1,13 @@
 import socket
 import ast
 import logging
-from conf.admin import ConfigManager
+import configparser
 import os
 import hashlib
-import json
+import tarfile
+import subprocess as sp
+import setproctitle
+import shutil
 
 
 def main():
@@ -12,7 +15,7 @@ def main():
     host = "127.0.0.1"
     port = 10000
     address = (host, port)
-    download_path = r"./download/"
+    download_path = r"/Users/jack/Desktop/MISService/download/"
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
@@ -27,8 +30,8 @@ def main():
             client.close()
             return None
 
-        # send search version to server
-        message = str({"action": "search", "version": ConfigManager().get_app_value("version")}).encode("utf-8")
+        # send search package and get file info
+        message = str({"action": "search", "version": Utility.get_config_value("APP", "version")}).encode("utf-8")
         client.send(message)
         result = client.recv(1024)
         if result == b"NotFound":
@@ -37,7 +40,7 @@ def main():
         else:
             info = Utility.get_message_info(result)
 
-        # request download latest file.
+        # send download command
         message = str({"action": "download", "name": info.get("version") + ".tar.gz"}).encode("utf-8")
         client.send(message)
 
@@ -62,10 +65,16 @@ def main():
                         f.write(client.recv(file_size - total_size))
                         break
 
+        # check hash and replace prod
         hash_code = Utility.get_hash_code(file_path)
 
         if hash_code == file_hash_code:
-            print("Congratulations, download complete!")
+            if Utility.decompress(file_path):
+                source_path = os.path.dirname(file_path) + "/MISService/"
+                MISHelper(source_path)
+                print("Congratulations, download complete!")
+            else:
+                pass
 
     except socket.error as error:
         print("Sorry, we got an error from main - {}".format(error))
@@ -75,23 +84,43 @@ def main():
 
 class MISHelper:
 
-    def __init__(self):
-        pass
+    Application_Path = r"/Users/jack/Desktop/MISService/download/Code/"
 
-    def remove(self):
-        pass
+    def __init__(self, source_path):
+
+        self.stop()
+        Utility.remove_folder(self.Application_Path)
+        Utility.move_folder(source_path, self.Application_Path)
+        self.start()
 
     def start(self):
         pass
+        # sp.getoutput("python3 MISApplication.py")
 
     def stop(self):
         pass
+        # process = sp.getoutput("ps aux | grep 'MISApplication' | awk '{print $2}'")
+        # if len(process) > 0:
+        #     for p in process:
+        #         sp.getoutput("kill -9 {}".format(p))
 
 
 class Utility:
 
-    def __init__(self):
-        pass
+    base_path = r"/Users/jack/Desktop/MISService/Source/"
+    download_path = r"/Users/jack/Desktop/MISService/download/"
+    config_path = r"/Users/jack/Desktop/MISService/MISService/config.ini"
+
+    @staticmethod
+    def get_config_value(section, key):
+        try:
+            config = configparser.ConfigParser()
+            config.read(Utility.config_path)
+            value = config.get(section, key)
+        except Exception as error:
+            value = ""
+            logging.error("ConfigManager Error {}".format(error))
+        return value
 
     @staticmethod
     def get_hash_code(file):
@@ -107,31 +136,6 @@ class Utility:
             print("Sorry, we got an error {}".format(error))
 
     @staticmethod
-    def load_data():
-        file = r'db.json'
-        result = []
-        try:
-            if os.path.exists(file):
-                with open(file, "r") as f:
-                    result = json.load(f)
-        except Exception as error:
-            print("Sorry, we got an error {}".format(error))
-        return result
-
-    @staticmethod
-    def get_data(value):
-        result = {}
-        try:
-            versions = Utility.load_data()
-            for version in versions:
-                if version.get("version") == value.lower():
-                    result = version
-                    break
-        except Exception as error:
-            print("Sorry, we got an error {}".format(error))
-        return result
-
-    @staticmethod
     def get_message_info(message):
 
         try:
@@ -143,22 +147,48 @@ class Utility:
         return info
 
     @staticmethod
-    def get_version_info(version):
+    def decompress(file) -> bool:
+
+        result = False
 
         try:
+            if os.path.exists(file):
+                t = tarfile.open(file)
+                t.extractall(path=Utility.download_path)
+                result = True
+        except IOError as error:
+            logging.error("Sorry, we got an error from decompress - {}".format(error))
 
-            info = Utility.get_data(version)
+        return result
 
-            if len(info) > 0:
-                # size = os.stat("./source/{}.tar.gz".format(version)).st_size
-                size = os.path.getsize("./source/{}.tar.gz".format(version))
-                info.update({"size": size})
-        except Exception as error:
-            info = {}
-            logging.error("Sorry, we got an error from get_version_info - {}".format(error))
+    @staticmethod
+    def remove_folder(folder) -> bool:
+        result = False
 
-        return info
+        try:
+            if os.path.exists(folder):
+                shutil.rmtree(folder, ignore_errors=False)
+                result = True
+        except IOError as error:
+            logging.error("Sorry, we got an error from decompress - {}".format(error))
+
+        return result
+
+    @staticmethod
+    def move_folder(source, target) -> bool:
+        result = False
+
+        try:
+            if os.path.exists(source):
+                shutil.move(source, target)
+                result = True
+        except IOError as error:
+            logging.error("Sorry, we got an error from decompress - {}".format(error))
+
+        return result
 
 
 if __name__ == '__main__':
+    setproctitle.setproctitle("MISUpgradeClient")
     main()
+

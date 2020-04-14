@@ -5,11 +5,14 @@ import os
 import hashlib
 import logging
 from decimal import Decimal
+import setproctitle
 
 
 class UpgradeServer(socketserver.BaseRequestHandler):
 
     def handle(self):
+
+        base_path = r"/Users/jack/Desktop/MISService/Source/"
 
         try:
             while True:
@@ -47,7 +50,7 @@ class UpgradeServer(socketserver.BaseRequestHandler):
                     file_info = ast.literal_eval(info.decode("utf-8"))
                     file_name = "{}.{}".format(file_info.get("version"), "tar.gz")
                     file_size = int(file_info.get("size"))
-                    file_path = os.path.join("./source/", file_name)
+                    file_path = os.path.join(base_path, file_name)
                     try:
                         with open(file_path, "rb") as f:
                             if 0 < file_size <= 1024:
@@ -68,14 +71,12 @@ class UpgradeServer(socketserver.BaseRequestHandler):
         except Exception as error:
             logging.error("Sorry, we got an error from handle - {}".format(error))
         finally:
-            print('quit')
             self.request.close()
 
 
 class Utility:
 
-    def __init__(self):
-        pass
+    base_path = r"/Users/jack/Desktop/MISService/Source/"
 
     @staticmethod
     def get_hash_code(file):
@@ -134,8 +135,8 @@ class Utility:
             info = Utility.get_data(version)
 
             if len(info) > 0:
-                # size = os.stat("./source/{}.tar.gz".format(version)).st_size
-                size = os.path.getsize("./source/{}.tar.gz".format(version))
+                name = Utility.base_path + "{}.tar.gz".format(version)
+                size = os.path.getsize(name)
                 info.update({"size": size})
         except Exception as error:
             info = {}
@@ -145,6 +146,8 @@ class Utility:
 
 
 if __name__ == '__main__':
+
+    setproctitle.setproctitle("MISUpgradeServer")
 
     try:
 
