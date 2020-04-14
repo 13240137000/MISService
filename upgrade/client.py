@@ -5,7 +5,6 @@ import configparser
 import os
 import hashlib
 import tarfile
-import subprocess as sp
 import setproctitle
 import shutil
 
