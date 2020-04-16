@@ -23,7 +23,8 @@ class MainWindow(QWidget):
     __model = __config.get_model_value("name")
     __current_student_no = ""
 
-    def __init__(self, log, queue):
+    def __init__(self, log, queue,parent=None):
+        super().__init__(parent)
         self.log = log
         self.log.start()
         self.queue = queue
@@ -211,3 +212,4 @@ if __name__ == '__main__':
     w = MainWindow(scheduler, q)
     w.show()
     app.exec_()
+
