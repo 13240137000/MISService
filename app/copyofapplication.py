@@ -6,15 +6,15 @@ from core.face.helper import FaceHelper
 from conf.admin import ConfigManager
 from PIL import Image,ImageQt
 import multiprocessing as mp
+from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import time
-import qdarkstyle
 import setproctitle
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
 
     __student = Student()
     __face = FaceHelper()
@@ -24,6 +24,8 @@ class MainWindow(QWidget):
     __current_student_no = ""
 
     def __init__(self, log, queue):
+
+        QMainWindow.__init__(self)
         self.log = log
         self.log.start()
         self.queue = queue
@@ -32,66 +34,22 @@ class MainWindow(QWidget):
         height = int(self.__config.get_capture_value("height"))
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
-        self.mlayout = QHBoxLayout(self)
+        self.setGeometry(QtCore.QRect(0,0,800,480))
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setGeometry(0,0,800,480)
         self.displayLabel = QLabel(self)
-        self.displayLabel.setFixedSize(640, 480)
-        self.DateLabel = QLabel(self)
-        self.DateLabel.setAlignment(Qt.AlignCenter)
-        self.DateLabel.setStyleSheet('border:none;font-size:14px;')
-        self.TimeLabel = QLabel(self)
-        self.TimeLabel.setAlignment(Qt.AlignCenter)
-        self.TimeLabel.setStyleSheet('border:none; border-bottom:1px solid white;font-size:22px;')
-        self.DateLabel.setText(QDate.currentDate().toString())
-        self.TimeLabel.setText(QTime.currentTime().toString())
-        self.photoLabel = QLabel(self)
-        self.photoLabel.setFixedSize(int(self.__config.get_picture_value("weight")),
-                                     int(self.__config.get_picture_value("height")))
-        self.photoLabel.setAlignment(Qt.AlignCenter)
-        self.photoLabel.setStyleSheet('border:1px solid darkGray; ')
-        hLayout = QHBoxLayout(self)
-        hLayout.addSpacing(5)
-        hLayout.addWidget(self.photoLabel)
-        self.studentNoLabel = QLineEdit(self)
-        self.studentNoLabel.setAlignment(Qt.AlignLeft)
-        self.studentNoLabel.setFocusPolicy(Qt.NoFocus)
-        self.studentNoLabel.setText("学号：")
-        self.studentNameLabel = QLineEdit(self)
-        self.studentNameLabel.setAlignment(Qt.AlignLeft)
-        self.studentNameLabel.setFocusPolicy(Qt.NoFocus)
-        self.studentNameLabel.setText("姓名：")
-        self.tempLabel = QLineEdit(self)
-        self.tempLabel.setAlignment(Qt.AlignLeft)
-        self.tempLabel.setFocusPolicy(Qt.NoFocus)
-        self.tempLabel.setText("体温：")
-        vLayout = QVBoxLayout(self)
-        vLayout.addSpacing(20)
-        vLayout.addWidget(self.TimeLabel)
-        vLayout.addWidget(self.DateLabel)
-        vLayout.addStretch(1)
-        vLayout.addLayout(hLayout)
-        vLayout.addSpacing(55)
-        vLayout.addWidget(self.studentNameLabel)
-        vLayout.addWidget(self.studentNoLabel)
-        vLayout.addWidget(self.tempLabel)
-        vLayout.addStretch(1)
-        self.mlayout.addWidget(self.displayLabel)
-        self.mlayout.addLayout(vLayout)
-        self.mlayout.setSpacing(10)
-        self.mlayout.setContentsMargins(0,0,10,0)
-        self.setLayout(self.mlayout)
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.displayLabel.setGeometry(QtCore.QRect(0,0,800,480))
+        self.displayLabel.setFixedSize(800, 480)
+        self.shadow = ShadowWidget()
+        self.shadow.setParent(self, Qt.FramelessWindowHint|Qt.Window)
+        self.shadow.hide()
         self.show()
         self.timer = QTimer()
         self.timer.start()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.start_camera)
-        self.oneSectimer = QTimer()
-        self.oneSectimer.setInterval(1000)
-        self.oneSectimer.timeout.connect(self.refresh_time)
-        self.oneSectimer.start()
-        self.timecount=0
+        self.shadowTimer = QTimer()
+        self.shadowTimer.setInterval(10000)
+        self.shadowTimer.timeout.connect(self.hide_shadow)
 
     def quit(self):
         try:
@@ -102,7 +60,13 @@ class MainWindow(QWidget):
             self.log.terminate()
             self.close()
 
+    def hide_shadow(self):
+
+        self.shadow.hide()
+        self.shadowTimer.stop()
+
     def insert_log_and_sent_sms(self, info):
+
         if self.__current_student_no != info["StudentNo"]:
             self.__current_student_no = info["StudentNo"]
             temperature = {"temperature": 36.1}
@@ -110,60 +74,79 @@ class MainWindow(QWidget):
             self.queue.put(info)
 
     def find_student(self, image, locations):
+
         if len(locations) > 0:
             info = self.__student.get_student_by_picture(None, image, locations)
             if len(info) and len(info["PictureName"]) > 0:
                 self.bind_result(info)
                 self.insert_log_and_sent_sms(info)
-            self.timecount = 0
+                self.shadowTimer.start()
 
     def find_face_location(self, image, small_image):
+
         locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model=self.__model)
         if len(locations) > 0:
             for (top, right, bottom, left) in locations:
-                cv.rectangle(image, (left*2, top*2), (right*2, bottom*2), (0, 255, 0), 2)
+                cv.rectangle(image, (left*4, top*4), (right*4, bottom*4), (0, 255, 0), 2)
             self.bind_player(image)
             self.find_student(small_image, locations)
         else:
             self.bind_player(image)
 
     def bind_result(self, info):
+        self.shadowTimer.start()
         image = Image.open(os.path.join(self.__thumbnail_path, info["PictureName"]))
         img = ImageQt.ImageQt(image)
-        self.photoLabel.setPixmap(
-            QPixmap.fromImage(img).scaled(self.photoLabel.width(), self.photoLabel.height()))
-        self.studentNameLabel.setText("姓名：" + info["Name"])
-        self.studentNoLabel.setText("学号：" + info["StudentNo"])
-        self.tempLabel.setText("体温： 36.1")
-
-    def refresh_time(self):
-        self.DateLabel.setText(QDate.currentDate().toString())
-        self.TimeLabel.setText(QTime.currentTime().toString())
-        if self.timecount < 5:
-            self.timecount +=1
+        self.shadow.photoLabel.setPixmap(
+            QPixmap.fromImage(img).scaled(self.shadow.photoLabel.width(), self.shadow.photoLabel.height()))
+        self.shadow.studentNameLabel.setText("姓名：" + info["Name"])
+        self.shadow.studentNoLabel.setText("学号：" + info["StudentNo"])
+        self.shadow.show()
 
     def bind_player(self, image):
         image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
         img = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)
         self.displayLabel.setPixmap(
-            QPixmap.fromImage(img))
-        if self.timecount >= 5:
-            self.photoLabel.clear()
-            self.studentNoLabel.setText("学号：" )
-            self.studentNameLabel.setText("姓名：")
-            self.tempLabel.setText("体温：")
+            QPixmap.fromImage(img).scaled(self.displayLabel.width(), self.displayLabel.height()))
 
     def start_camera(self):
+
         try:
+
             success, image = self.cap.read()
+
             if success:
-                # image = cv.flip(image, -1)
                 picture = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-                small_image = cv.resize(picture, (0, 0), fx=0.5, fy=0.5)
+                small_image = cv.resize(picture, (0, 0), fx=0.25, fy=0.25)
                 small_image = small_image[:, :, ::-1]
                 self.find_face_location(image, small_image)
+
         except KeyboardInterrupt:
             pass
+
+
+class ShadowWidget(QWidget):
+
+    def __init__(self, parent=None):
+        super(ShadowWidget,self).__init__(parent)
+
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setGeometry(QtCore.QRect(640, 0, 160, 480))
+        vLayout = QVBoxLayout(self)
+        self.photoLabel = QLabel(self)
+        self.photoLabel.setFixedSize(90,120)
+        self.photoLabel.setAlignment(Qt.AlignLeft)
+        self.studentNoLabel = QLabel(self)
+        self.studentNoLabel.setAlignment(Qt.AlignLeft)
+        self.studentNameLabel = QLabel(self)
+        self.studentNameLabel.setAlignment(Qt.AlignLeft)
+        vLayout.addStretch(1)
+        vLayout.addWidget(self.photoLabel)
+        vLayout.addWidget(self.studentNoLabel)
+        vLayout.addWidget(self.studentNameLabel)
+        vLayout.addStretch(1)
+        self.setLayout(vLayout)
 
 
 class LogService(mp.Process):
@@ -187,7 +170,6 @@ class LogService(mp.Process):
             pass
 
     def check_is_sent_sms(self, info):
-
         sms = 0
         if len(self.__log.total_record_by_minutes(int(info["ID"]))) <= 0:
             self.sms()
@@ -203,11 +185,11 @@ class LogService(mp.Process):
 
 
 if __name__ == '__main__':
+
     setproctitle.setproctitle("MISApplication")
     q = mp.Queue()
     scheduler = LogService(q)
     app = QApplication([])
-    app.setOverrideCursor(Qt.BlankCursor)
     w = MainWindow(scheduler, q)
     w.show()
     app.exec_()

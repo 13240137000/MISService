@@ -106,7 +106,6 @@ class MISHelper:
 
 class Utility:
 
-    base_path = r"/Users/jack/Desktop/MISService/Source/"
     download_path = r"/Users/jack/Desktop/MISService/download/"
     config_path = r"/Users/jack/Desktop/MISService/MISService/config.ini"
 
