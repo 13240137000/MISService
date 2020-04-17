@@ -151,8 +151,8 @@ if __name__ == '__main__':
 
     try:
 
-        host = "127.0.0.1"
-        port = 10000
+        host = "192.168.3.39"
+        port = 10101
         address = (host, port)
         server = socketserver.ThreadingTCPServer(address, UpgradeServer)
         server.serve_forever()

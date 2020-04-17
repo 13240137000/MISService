@@ -7,7 +7,7 @@ import hashlib
 import tarfile
 import setproctitle
 import shutil
-
+import subprocess as sp
 
 def main():
 
@@ -88,20 +88,18 @@ class MISHelper:
     def __init__(self, source_path):
 
         self.stop()
-        Utility.remove_folder(self.Application_Path)
-        Utility.move_folder(source_path, self.Application_Path)
+        # Utility.remove_folder(self.Application_Path)
+        # Utility.move_folder(source_path, self.Application_Path)
         self.start()
 
     def start(self):
-        pass
-        # sp.getoutput("python3 MISApplication.py")
+        sp.getoutput("python3 /home/jack/Desktop/NANO_Misservice/MISService/app/applicaton.py")
 
     def stop(self):
-        pass
-        # process = sp.getoutput("ps aux | grep 'MISApplication' | awk '{print $2}'")
-        # if len(process) > 0:
-        #     for p in process:
-        #         sp.getoutput("kill -9 {}".format(p))
+        process = sp.getoutput("ps aux | grep 'MISApplication' | awk '{print $2}'")
+        if len(process) > 0:
+            for p in process:
+                sp.getoutput("kill -9 {}".format(p))
 
 
 class Utility:

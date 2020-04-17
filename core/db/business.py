@@ -29,12 +29,16 @@ class Student(object):
     @lru_cache(maxsize=102400, typed=True)
     def __get_students(self, extract) -> list:
         try:
-            if gv.get_value("students") is None:
+            if extract == 1:
+                if gv.get_value("students") is None:
+                    sql = StudentScript.get_all.format(extract)
+                    students = self.__db.execute(sql, result_dict=True)
+                    gv.set_value("students", students)
+                else:
+                    students = gv.get_value("students")
+            else:
                 sql = StudentScript.get_all.format(extract)
                 students = self.__db.execute(sql, result_dict=True)
-                gv.set_value("students", students)
-            else:
-                students = gv.get_value("students")
         except Exception as error:
             logging.error(error)
         return students
