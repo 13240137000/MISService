@@ -9,10 +9,11 @@ import setproctitle
 import shutil
 import subprocess as sp
 
+
 def main():
 
-    host = "127.0.0.1"
-    port = 10000
+    host = "192.168.3.39"
+    port = 10101
     address = (host, port)
     download_path = r"/Users/jack/Desktop/MISService/download/"
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -55,13 +56,15 @@ def main():
             if 0 < file_size <= 1024:
                 f.write(client.recv(1024))
             else:
-                total_size = file_size
+                total_received_size = 0
                 while True:
-                    if total_size > 1024:
-                        f.write(client.recv(1024))
-                        total_size = total_size - 1024
+                    if file_size - total_received_size > 1024:
+                        data = client.recv(1024)
+                        received_size = len(data)
+                        total_received_size += received_size
+                        f.write(data)
                     else:
-                        f.write(client.recv(file_size - total_size))
+                        f.write(client.recv(file_size - total_received_size))
                         break
 
         # check hash and replace prod
@@ -74,6 +77,8 @@ def main():
                 print("Congratulations, download complete!")
             else:
                 pass
+        else:
+            print("Sorry, hash code validation not pass.")
 
     except socket.error as error:
         print("Sorry, we got an error from main - {}".format(error))

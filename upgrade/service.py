@@ -62,7 +62,7 @@ class UpgradeServer(socketserver.BaseRequestHandler):
                                         self.request.send(f.read(1024))
                                         total_size = total_size - 1024
                                     else:
-                                        self.request.send(f.read(file_size - total_size))
+                                        self.request.send(f.read(total_size))
                                         break
 
                     except IOError as error:
@@ -151,6 +151,7 @@ if __name__ == '__main__':
 
     try:
 
+        print("Service has been stared.")
         host = "192.168.3.39"
         port = 10101
         address = (host, port)
