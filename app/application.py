@@ -12,6 +12,7 @@ from PyQt5.QtGui import *
 import time
 import qdarkstyle
 import setproctitle
+import logging
 
 
 class MainWindow(QWidget):
@@ -23,7 +24,7 @@ class MainWindow(QWidget):
     __model = __config.get_model_value("name")
     __current_student_no = ""
 
-    def __init__(self, log, queue,parent=None):
+    def __init__(self, log, queue, parent=None):
         super().__init__(parent)
         self.log = log
         self.log.start()
@@ -58,14 +59,17 @@ class MainWindow(QWidget):
         self.studentNoLabel.setAlignment(Qt.AlignLeft)
         self.studentNoLabel.setFocusPolicy(Qt.NoFocus)
         self.studentNoLabel.setText("学号：")
+        self.studentNoLabel.setStyleSheet('font-size:14px;')
         self.studentNameLabel = QLineEdit(self)
         self.studentNameLabel.setAlignment(Qt.AlignLeft)
         self.studentNameLabel.setFocusPolicy(Qt.NoFocus)
         self.studentNameLabel.setText("姓名：")
+        self.studentNameLabel.setStyleSheet('font-size:14px;')
         self.tempLabel = QLineEdit(self)
         self.tempLabel.setAlignment(Qt.AlignLeft)
         self.tempLabel.setFocusPolicy(Qt.NoFocus)
         self.tempLabel.setText("体温：")
+        self.tempLabel.setStyleSheet('font-size:14px;')
         vLayout = QVBoxLayout(self)
         vLayout.addSpacing(20)
         vLayout.addWidget(self.TimeLabel)
@@ -83,7 +87,6 @@ class MainWindow(QWidget):
         self.mlayout.setContentsMargins(0,0,10,0)
         self.setLayout(self.mlayout)
         self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-        self.show()
         self.timer = QTimer()
         self.timer.start()
         self.timer.setInterval(100)
@@ -203,13 +206,44 @@ class LogService(mp.Process):
         pass
 
 
+def init_feature():
+
+    try:
+
+        if Student().init_feature():
+            print('Feature initialization completed!')
+        else:
+            print('Feature initialization failed!')
+    except Exception as error:
+        logging.error(error)
+
+
 if __name__ == '__main__':
+
     setproctitle.setproctitle("MISApplication")
+
+    app = QApplication(sys.argv)
+    splash_pix = QPixmap('./source/loading.jpeg')
+    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+    splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+    splash.show()
+
+    splash.showMessage("<h1><font color='#ffffff'>Loading Feature</font></h1>", Qt.AlignBottom | Qt.AlignLeft, Qt.black)
+    init_feature()
+
+    splash.showMessage("<h1><font color='#ffffff'>Loading System</font></h1>", Qt.AlignBottom | Qt.AlignLeft, Qt.black)
+    app.processEvents()
+
     q = mp.Queue()
+    splash.showMessage("<h1><font color='#ffffff'>Loading Service</font></h1>", Qt.AlignBottom | Qt.AlignLeft, Qt.black)
     scheduler = LogService(q)
-    app = QApplication([])
+
     app.setOverrideCursor(Qt.BlankCursor)
+    splash.showMessage("<h1><font color='#ffffff'>Loading Application</font></h1>",
+                       Qt.AlignBottom | Qt.AlignLeft, Qt.black)
     w = MainWindow(scheduler, q)
     w.show()
+    time.sleep(1)
+    splash.finish(w)
+    splash.deleteLater()
     app.exec_()
-
