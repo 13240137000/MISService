@@ -214,8 +214,8 @@ def upgrade_system():
 
         # init path
 
-        db_directory_name = ConfigManager().get_app_value("db_directory_name")
-        picture_directory_name = ConfigManager().get_app_value("picture_directory_name")
+        db_folder_name = ConfigManager().get_app_value("db_folder_name")
+        picture_folder_name = ConfigManager().get_app_value("picture_folder_name")
         db_path = ConfigManager().get_path_value("db")
         picture_path = ConfigManager().get_path_value("picture")
 
@@ -223,8 +223,8 @@ def upgrade_system():
         device = sp.getoutput("df -h | grep '/media/' | awk -F '/media/' '{print $2}'")
         directory = sp.getoutput("find /media -maxdepth 2 -type d -name '{}'".format(device))
 
-        db_path_new = os.path.join(directory, db_directory_name)
-        picture_path_new = os.path.join(directory, picture_directory_name)
+        db_path_new = os.path.join(directory, db_folder_name)
+        picture_path_new = os.path.join(directory, picture_folder_name)
 
         if os.path.exists(db_path_new) and os.path.exists(picture_path_new):
             shutil.rmtree(db_path, ignore_errors=False)
