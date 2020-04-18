@@ -221,16 +221,19 @@ def upgrade_system():
 
         # get directory
         device = sp.getoutput("df -h | grep '/media/' | awk -F '/media/' '{print $2}'")
-        directory = sp.getoutput("find /media -maxdepth 2 -type d -name '{}'".format(device))
 
-        db_path_new = os.path.join(directory, db_folder_name)
-        picture_path_new = os.path.join(directory, picture_folder_name)
+        if len(device) > 0:
+            directory = sp.getoutput("find /media -maxdepth 2 -type d -name '{}'".format(device))
 
-        if os.path.exists(db_path_new) and os.path.exists(picture_path_new):
-            shutil.rmtree(db_path, ignore_errors=False)
-            shutil.rmtree(picture_path, ignore_errors=False)
-            shutil.move(db_path_new, db_path)
-            shutil.move(picture_path_new, picture_path)
+            if len(directory) > 0:
+                db_path_new = os.path.join(directory, db_folder_name)
+                picture_path_new = os.path.join(directory, picture_folder_name)
+
+                if os.path.exists(db_path_new) and os.path.exists(picture_path_new):
+                    shutil.rmtree(db_path, ignore_errors=False)
+                    shutil.rmtree(picture_path, ignore_errors=False)
+                    shutil.move(db_path_new, db_path)
+                    shutil.move(picture_path_new, picture_path)
 
     except Exception as error:
         print("replace db and picture error - {}".format(error))
