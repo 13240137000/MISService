@@ -13,6 +13,8 @@ import time
 import qdarkstyle
 import setproctitle
 import logging
+import subprocess as sp
+import shutil
 
 
 class MainWindow(QWidget):
@@ -204,6 +206,34 @@ class LogService(mp.Process):
 
     def sms(self):
         pass
+
+
+def upgrade_system():
+
+    try:
+
+        # init path
+
+        app_directory_name = ConfigManager().get_app_value("app_directory_name")
+        picture_directory_name = ConfigManager().get_app_value("picture_directory_name")
+        db_path = ConfigManager().get_path_value("db")
+        picture_path = ConfigManager().get_path_value("picture")
+
+        # get directory
+        device = sp.getoutput("df -h | grep '/media/' | awk -F '/media/' '{print $2}'")
+        directory = sp.getoutput("find /media -maxdepth 2 -type d -name '{}'".format(device))
+
+        db_path_new = os.path.join(directory, app_directory_name)
+        picture_path_new = os.path.join(directory, picture_directory_name)
+
+        if os.path.exists(db_path_new) and os.path.exists(picture_path_new):
+            shutil.rmtree(db_path, ignore_errors=False)
+            shutil.rmtree(picture_path, ignore_errors=False)
+            shutil.move(db_path_new, db_path)
+            shutil.move(picture_path_new, picture_path)
+
+    except Exception as error:
+        print("replace db and picture error - {}".format(error))
 
 
 def init_feature():
