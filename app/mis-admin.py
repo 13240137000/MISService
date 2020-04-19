@@ -22,7 +22,7 @@ class UserInterface(object):
         self.log = log
         self.queue = queue
 
-        self.cap = cv.VideoCapture(r'/Users/jack/Desktop/MISService/MISService/images/jw.mp4')
+        self.cap = cv.VideoCapture(0)
         self.cap.set(3, int(self.__config.get_capture_value("width")))
         self.cap.set(4, int(self.__config.get_capture_value("height")))
 
