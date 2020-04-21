@@ -127,7 +127,25 @@ class MainWindow(QWidget):
         locations = self.__face.get_face_locations(small_image, number_of_times_to_upsample=0, model=self.__model)
         if len(locations) > 0:
             for (top, right, bottom, left) in locations:
-                cv.rectangle(image, (left*2, top*2), (right*2, bottom*2), (0, 255, 0), 2)
+
+                # cv.rectangle(image, (left*2, top*2), (right*2-20, bottom*2-20), (0, 255, 0), 1)
+
+                top = top * 2
+                right = right * 2 - 20
+                bottom = bottom * 2 - 20
+                left = left * 2
+                left_top = left+(right-left)
+                right_bottom = right-(right-left)
+
+                cv.line(image, (left, top), (left, top + 15), (0, 255, 0), 4)
+                cv.line(image, (left, top), (left + 15, top), (0, 255, 0), 4)
+                cv.line(image, (right - 15, bottom), (right, bottom), (0, 255, 0), 4)
+                cv.line(image, (right, bottom - 15), (right, bottom), (0, 255, 0), 4)
+                cv.line(image, (left_top, top), (left_top, top + 15), (0, 255, 0), 4)
+                cv.line(image, (left_top - 15, top), (left_top, top), (0, 255, 0), 4)
+                cv.line(image, (right_bottom, bottom), (right_bottom + 15, bottom), (0, 255, 0), 4)
+                cv.line(image, (right_bottom, bottom - 15), (right_bottom, bottom), (0, 255, 0), 4)
+
             self.bind_player(image)
             self.find_student(small_image, locations)
         else:
