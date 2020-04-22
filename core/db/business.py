@@ -288,7 +288,9 @@ class Log(object):
             logs = self.__db.execute(sql, result_dict=True)
             if len(logs):
                 df = pd.DataFrame(logs)
-                df.to_csv(os.path.join(self.__config.get_path_value("export"), "report.csv"))
+                file_path = self.__config.get_path_value("export")
+                file_name = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".csv"
+                df.to_csv(os.path.join(file_path, file_name))
 
         except Exception as error:
             logging.error("log get all - {}".format(error))
