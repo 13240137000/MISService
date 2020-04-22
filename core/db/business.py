@@ -3,6 +3,7 @@ import os
 import re
 import time
 import datetime
+import pandas as pd
 import cache.vars as gv
 from .helper import SqliteHelper
 from .script import *
@@ -278,3 +279,18 @@ class Log(object):
             logging.error("total record by minutes - {}".format(error))
 
         return result
+
+    def export(self):
+
+        try:
+
+            sql = LogScript.get_all
+            logs = self.__db.execute(sql, result_dict=True)
+            if len(logs):
+                df = pd.DataFrame(logs)
+                df.to_csv(os.path.join(self.__config.get_path_value("export"), "report.csv"))
+
+        except Exception as error:
+            logging.error("log get all - {}".format(error))
+
+        return logs

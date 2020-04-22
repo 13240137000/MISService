@@ -91,7 +91,7 @@ class MainWindow(QWidget):
         self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.timer = QTimer()
         self.timer.start()
-        self.timer.setInterval(100)
+        self.timer.setInterval(200)
         self.timer.timeout.connect(self.start_camera)
         self.oneSectimer = QTimer()
         self.oneSectimer.setInterval(1000)
