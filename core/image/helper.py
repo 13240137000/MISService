@@ -21,8 +21,8 @@ class ImageHelper(object):
             image = os.path.join(self.__origin_path, name)
             target_image = os.path.join(self.__target_path, name)
             instance = Image.open(image)
-            instance.thumbnail((int(self.__width), int(self.__height)))
-            instance.save(target_image)
+            thumbnail_image = instance.resize((int(self.__width), int(self.__height)), resample=Image.LANCZOS)
+            thumbnail_image.save(target_image)
 
         except Exception as error:
             result = False
